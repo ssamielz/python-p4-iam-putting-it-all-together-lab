@@ -91,6 +91,7 @@ class TestUser:
             db.session.commit()
 
             user = User(username="Prabhdip")
+            user.password_hash = "password"
 
             recipe_1 = Recipe(
                 title="Delicious Shed Ham",
@@ -103,6 +104,7 @@ class TestUser:
                     """ smallness northward situation few her certainty""" + \
                     """ something.""",
                 minutes_to_complete=60,
+                user=user
                 )
             recipe_2 = Recipe(
                 title="Hasty Party Ham",
@@ -113,6 +115,7 @@ class TestUser:
                              """ unpacked be advanced at. Confined in declared""" + \
                              """ marianne is vicinity.""",
                 minutes_to_complete=30,
+                user=user
                 )
 
             user.recipes.append(recipe_1)
