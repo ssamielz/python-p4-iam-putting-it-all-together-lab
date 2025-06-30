@@ -1,8 +1,8 @@
-"""Create user and recipe models
+"""Initial migration
 
-Revision ID: 7673878811a1
+Revision ID: ccd4f9114918
 Revises: 
-Create Date: 2025-06-29 19:53:56.132797
+Create Date: 2025-06-22 15:38:28.077168
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '7673878811a1'
+revision = 'ccd4f9114918'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -33,7 +33,7 @@ def upgrade():
     sa.Column('instructions', sa.String(), nullable=False),
     sa.Column('minutes_to_complete', sa.Integer(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_recipes_user_id_users')),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###

@@ -13,6 +13,7 @@ class TestRecipe:
         with app.app_context():
 
             Recipe.query.delete()
+            User.query.delete()
             db.session.commit()
 
             user = User(username="TestUser")
@@ -31,7 +32,7 @@ class TestRecipe:
                         """ smallness northward situation few her certainty""" + \
                         """ something.""",
                     minutes_to_complete=60,
-                    user=user
+                    user_id=user.id
                     )
 
             db.session.add(recipe)
@@ -70,10 +71,10 @@ class TestRecipe:
             Recipe.query.delete()
             db.session.commit()
 
-            '''must raise either a sqlalchemy.exc.IntegrityError with constraints or a custom validation ValueError'''
-            with pytest.raises( (IntegrityError, ValueError) ):
-                recipe = Recipe(
-                    title="Generic Ham",
-                    instructions="idk lol")
+            recipe = Recipe(
+                title="Generic Ham",
+                instructions="idk lol")
+
+            with pytest.raises(IntegrityError):
                 db.session.add(recipe)
                 db.session.commit()

@@ -4,21 +4,8 @@ from random import randint, choice as rc
 
 from faker import Faker
 
-from app import create_app
-from models import db, User, Recipe
-
-app = create_app()
-with app.app_context():
-    db.drop_all()
-    db.create_all()
-    u = User(username='demo', image_url='', bio='demo')
-    u.password_hash = 'password'
-    db.session.add(u)
-    db.session.commit()
-    r = Recipe(title='Demo Recipe', instructions='x'*60, minutes_to_complete=10, user_id=u.id)
-    db.session.add(r)
-    db.session.commit()
-    print("Seeded!")
+from app import app
+from models import db, Recipe, User
 
 fake = Faker()
 
@@ -27,6 +14,8 @@ with app.app_context():
     print("Deleting all records...")
     Recipe.query.delete()
     User.query.delete()
+    db.session.commit()
+
 
     fake = Faker()
 
