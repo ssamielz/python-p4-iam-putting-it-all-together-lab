@@ -16,65 +16,78 @@ class TestSignup:
         
         with app.app_context():
             
-            User.query.delete()
+            # Delete recipes associated with the user first
+            user = User.query.filter_by(username='ashketchum').first()
+            if user:
+                Recipe.query.filter_by(user_id=user.id).delete()
+                db.session.delete(user)
             db.session.commit()
-        
-        with app.test_client() as client:
+
+            with app.test_client() as client:
+                with app.app_context():
+                    Recipe.query.delete()
+                    User.query.delete()
+                    db.session.commit()
             
-            response = client.post('/signup', json={
-                'username': 'ashketchum',
-                'password': 'pikachu',
-                'bio': '''I wanna be the very best
-                        Like no one ever was
-                        To catch them is my real test
-                        To train them is my cause
-                        I will travel across the land
-                        Searching far and wide
-                        Teach Pokémon to understand
-                        The power that's inside''',
-                'image_url': 'https://cdn.vox-cdn.com/thumbor/I3GEucLDPT6sRdISXmY_Yh8IzDw=/0x0:1920x1080/1820x1024/filters:focal(960x540:961x541)/cdn.vox-cdn.com/uploads/chorus_asset/file/24185682/Ash_Ketchum_World_Champion_Screenshot_4.jpg',
-            })
+                    response = client.post('/signup', json={
+                        'username': 'ashketchum',
+                        'password': 'pikachu',
+                        'bio': '''I wanna be the very best
+                                Like no one ever was
+                                To catch them is my real test
+                                To train them is my cause
+                                I will travel across the land
+                                Searching far and wide
+                                Teach Pokémon to understand
+                                The power that's inside''',
+                        'image_url': 'https://cdn.vox-cdn.com/thumbor/I3GEucLDPT6sRdISXmY_Yh8IzDw=/0x0:1920x1080/1820x1024/filters:focal(960x540:961x541)/cdn.vox-cdn.com/uploads/chorus_asset/file/24185682/Ash_Ketchum_World_Champion_Screenshot_4.jpg',
+                    })
 
-            assert(response.status_code == 201)
+                    assert(response.status_code == 201)
 
-            new_user = User.query.filter(User.username == 'ashketchum').first()
+                    new_user = User.query.filter(User.username == 'ashketchum').first()
 
-            assert(new_user)
-            assert(new_user.authenticate('pikachu'))
-            assert(new_user.image_url == 'https://cdn.vox-cdn.com/thumbor/I3GEucLDPT6sRdISXmY_Yh8IzDw=/0x0:1920x1080/1820x1024/filters:focal(960x540:961x541)/cdn.vox-cdn.com/uploads/chorus_asset/file/24185682/Ash_Ketchum_World_Champion_Screenshot_4.jpg')
-            assert(new_user.bio == '''I wanna be the very best
-                        Like no one ever was
-                        To catch them is my real test
-                        To train them is my cause
-                        I will travel across the land
-                        Searching far and wide
-                        Teach Pokémon to understand
-                        The power that's inside''')
+                    assert(new_user)
+                    assert(new_user.authenticate('pikachu'))
+                    assert(new_user.image_url == 'https://cdn.vox-cdn.com/thumbor/I3GEucLDPT6sRdISXmY_Yh8IzDw=/0x0:1920x1080/1820x1024/filters:focal(960x540:961x541)/cdn.vox-cdn.com/uploads/chorus_asset/file/24185682/Ash_Ketchum_World_Champion_Screenshot_4.jpg')
+                    assert(new_user.bio == '''I wanna be the very best
+                                Like no one ever was
+                                To catch them is my real test
+                                To train them is my cause
+                                I will travel across the land
+                                Searching far and wide
+                                Teach Pokémon to understand
+                                The power that's inside''')
 
     def test_422s_invalid_users_at_signup(self):
         '''422s invalid usernames at /signup.'''
         
         with app.app_context():
             
+            Recipe.query.delete()
             User.query.delete()
             db.session.commit()
         
-        with app.test_client() as client:
+            with app.test_client() as client:
+                with app.app_context():
+                    Recipe.query.delete()
+                    User.query.delete()
+                    db.session.commit()
             
-            response = client.post('/signup', json={
-                'password': 'pikachu',
-                'bio': '''I wanna be the very best
-                        Like no one ever was
-                        To catch them is my real test
-                        To train them is my cause
-                        I will travel across the land
-                        Searching far and wide
-                        Teach Pokémon to understand
-                        The power that's inside''',
-                'image_url': 'https://cdn.vox-cdn.com/thumbor/I3GEucLDPT6sRdISXmY_Yh8IzDw=/0x0:1920x1080/1820x1024/filters:focal(960x540:961x541)/cdn.vox-cdn.com/uploads/chorus_asset/file/24185682/Ash_Ketchum_World_Champion_Screenshot_4.jpg',
-            })
+                    response = client.post('/signup', json={
+                        'password': 'pikachu',
+                        'bio': '''I wanna be the very best
+                                Like no one ever was
+                                To catch them is my real test
+                                To train them is my cause
+                                I will travel across the land
+                                Searching far and wide
+                                Teach Pokémon to understand
+                                The power that's inside''',
+                        'image_url': 'https://cdn.vox-cdn.com/thumbor/I3GEucLDPT6sRdISXmY_Yh8IzDw=/0x0:1920x1080/1820x1024/filters:focal(960x540:961x541)/cdn.vox-cdn.com/uploads/chorus_asset/file/24185682/Ash_Ketchum_World_Champion_Screenshot_4.jpg',
+                    })
 
-            assert(response.status_code == 422)
+                    assert(response.status_code == 422)
 
 class TestCheckSession:
     '''CheckSession resource in app.py'''
@@ -84,35 +97,39 @@ class TestCheckSession:
         
         with app.app_context():
             
+            Recipe.query.delete()
             User.query.delete()
             db.session.commit()
         
         with app.test_client() as client:
+            with app.app_context():
+                # create a new first record
+                response = client.post('/signup', json={
+                    'username': 'ashketchum',
+                    'password': 'pikachu',
+                    'bio': '''I wanna be the very best
+                            Like no one ever was
+                            To catch them is my real test
+                            To train them is my cause
+                            I will travel across the land
+                            Searching far and wide
+                            Teach Pokémon to understand
+                            The power that's inside''',
+                    'image_url': 'https://cdn.vox-cdn.com/thumbor/I3GEucLDPT6sRdISXmY_Yh8IzDw=/0x0:1920x1080/1820x1024/filters:focal(960x540:961x541)/cdn.vox-cdn.com/uploads/chorus_asset/file/24185682/Ash_Ketchum_World_Champion_Screenshot_4.jpg',
+                })
 
-            # create a new first record
-            client.post('/signup', json={
-                'username': 'ashketchum',
-                'password': 'pikachu',
-                'bio': '''I wanna be the very best
-                        Like no one ever was
-                        To catch them is my real test
-                        To train them is my cause
-                        I will travel across the land
-                        Searching far and wide
-                        Teach Pokémon to understand
-                        The power that's inside''',
-                'image_url': 'https://cdn.vox-cdn.com/thumbor/I3GEucLDPT6sRdISXmY_Yh8IzDw=/0x0:1920x1080/1820x1024/filters:focal(960x540:961x541)/cdn.vox-cdn.com/uploads/chorus_asset/file/24185682/Ash_Ketchum_World_Champion_Screenshot_4.jpg',
-            })
-            
-            with client.session_transaction() as session:
+                assert(response.status_code == 201)
+
+                new_user = User.query.filter(User.username == 'ashketchum').first()
                 
-                session['user_id'] = 1
+                with client.session_transaction() as session:
+                    session['user_id'] = new_user.id
 
-            response = client.get('/check_session')
-            response_json = response.json
+                response = client.get('/check_session')
+                response_json = response.json
 
-            assert response_json['id'] == 1
-            assert response_json['username']
+                assert response_json['id'] == new_user.id
+                assert response_json['username'] == 'ashketchum'
 
     def test_401s_for_no_session(self):
         '''returns a 401 Unauthorized status code if there is no active session.'''

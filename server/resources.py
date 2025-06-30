@@ -17,7 +17,10 @@ class Signup(Resource):
             return format_user(u), 201
         except Exception as e:
             db.session.rollback()
-            return {"errors": [str(e)]}, 422
+            errors = []
+            for error in e.args:
+                errors.append(str(error))
+            return {"errors": errors}, 422
 
 class CheckSession(Resource):
     def get(self):

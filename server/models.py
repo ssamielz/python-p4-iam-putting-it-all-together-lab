@@ -1,52 +1,68 @@
 from flask_sqlalchemy import SQLAlchemy
-from flask_bcrypt import Bcrypt
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import UniqueConstraint
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
+from flask_bcrypt import Bcrypt
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 
 class User(db.Model):
     __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String, nullable=False, unique=True)
-    _password_hash = db.Column(db.String, nullable=False)
-    image_url = db.Column(db.String)
-    bio = db.Column(db.String)
-    recipes = db.relationship('Recipe', backref='user', lazy=True)
 
-    @property
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    _password_hash: Mapped[str] = mapped_column(String)
+    image_url: Mapped[str] = mapped_column(String)
+    bio: Mapped[str] = mapped_column(String)
+
+    recipes = relationship("Recipe", back_populates="user")
+
+    __table_args__ = (UniqueConstraint("username"),)
+
+    @hybrid_property
     def password_hash(self):
-        raise AttributeError('password_hash is write-only')
+        raise AttributeError("Password hashes may not be accessed.")
 
     @password_hash.setter
-    def password_hash(self, plain):
-        self._password_hash = bcrypt.generate_password_hash(plain).decode()
+    def password_hash(self, password):
+        password_hash = bcrypt.generate_password_hash(
+            password.encode('utf-8'))
+        self._password_hash = password_hash.decode('utf-8')
 
-    def authenticate(self, plain):
-        return bcrypt.check_password_hash(self._password_hash, plain)
+    def authenticate(self, password):
+        return bcrypt.check_password_hash(
+            self._password_hash, password.encode('utf-8'))
 
-    @validates('username')
-    def validate_username(self, key, u):
-        if not u:
-            raise ValueError("Username required")
-        return u
+    @validates("username")
+    def validate_username(self, key, username):
+        if not username:
+            raise ValueError("Username must be present")
+        return username
 
 class Recipe(db.Model):
     __tablename__ = 'recipes'
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String, nullable=False)
-    instructions = db.Column(db.String, nullable=False)
-    minutes_to_complete = db.Column(db.Integer)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
-    @validates('instructions')
-    def validate_instructions(self, key, inst):
-        if not inst or len(inst) < 50:
-            raise ValueError("Instructions must be 50+ chars")
-        return inst
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    instructions: Mapped[str] = mapped_column(String, nullable=False)
+    minutes_to_complete: Mapped[int] = mapped_column(Integer)
 
-    @validates('title')
-    def validate_title(self, key, t):
-        if not t:
-            raise ValueError("Title required")
-        return t
+    user_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('users.id'))
+    user = relationship("User", back_populates="recipes")
+
+    @validates("title")
+    def validate_title(self, key, title):
+        if not title:
+            raise ValueError("Title must be present")
+        return title
+
+    @validates("instructions")
+    def validate_instructions(self, key, instructions):
+        if not instructions:
+            raise ValueError("Instructions must be present")
+        if len(instructions) < 50:
+            raise ValueError("Instructions must be at least 50 characters long")
+        return instructions
